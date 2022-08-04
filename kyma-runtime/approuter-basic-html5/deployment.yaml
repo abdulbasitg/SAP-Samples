@@ -1,0 +1,120 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: approuter-basic-html5
+  labels:
+    app: approuter-basic-html5
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: approuter-basic-html5
+  template:
+    metadata:
+      labels:
+        app: approuter-basic-html5
+    spec:
+      containers:
+        - image: abdulbasitg/approuter-basic-html5:latest
+          imagePullPolicy: Always
+          name: approuter-basic-html5
+          volumeMounts:
+            - name: approuter-basic-html5-host-volume
+              mountPath: /etc/secrets/sapcp/html5-apps-repo/approuter-basic-html5-host-instance
+              readOnly: true
+            - name: approuter-basic-html5-xsuaa-volume
+              mountPath: /etc/secrets/sapcp/xsuaa/approuter-basic-html5-xsuaa-instance
+              readOnly: true
+            - name: approuter-basic-html5-destination-volume
+              mountPath: /etc/secrets/sapcp/destination/approuter-basic-html5-destination-instance
+              readOnly: true
+          env:
+            - name: SAP_CLOUD_SERVICE
+              value: "ag.samples"
+      volumes:
+        - name: approuter-basic-html5-host-volume
+          secret:
+            secretName: approuter-basic-html5-host-binding
+        - name: approuter-basic-html5-xsuaa-volume
+          secret:
+            secretName: approuter-basic-html5-xsuaa-binding
+        - name: approuter-basic-html5-destination-volume
+          secret:
+            secretName: approuter-basic-html5-destination-binding            
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: approuter-basic-html5-xsuaa-instance
+spec:
+  serviceOfferingName: xsuaa
+  servicePlanName: application  
+  parameters:
+    xsappname: approuter-basic
+    tenant-mode: dedicated
+    oauth2-configuration:
+      grant-types:
+        - authorization_code
+        - client_credentials
+        - password
+        - refresh_token
+        - urn:ietf:params:oauth:grant-type:saml2-bearer
+        - user_token
+        - client_x509
+        - urn:ietf:params:oauth:grant-type:jwt-bearer
+      redirect-uris:
+        - https://*/**            
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: approuter-basic-html5-xsuaa-binding
+spec:
+  serviceInstanceName: approuter-basic-html5-xsuaa-instance
+  externalName: ''
+  secretName: ''
+  parameters: {}
+  parametersFrom: []    
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: approuter-basic-html5-host-instance
+spec:
+  serviceOfferingName: html5-apps-repo
+  servicePlanName: app-host  
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: approuter-basic-html5-host-binding
+spec:
+  serviceInstanceName: approuter-basic-html5-host-instance   
+  externalName: ''
+  secretName: ''
+  parameters: {}
+  parametersFrom: []      
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: approuter-basic-html5-destination-instance
+  labels:
+    app.kubernetes.io/name: approuter-basic-html5-destination-instance
+spec:
+  serviceOfferingName: destination
+  servicePlanName: lite
+  parameters:
+    HTML5Runtime_enabled: true
+    version: "1.0.0"
+
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: approuter-basic-html5-destination-binding
+  labels:
+    app.kubernetes.io/name: approuter-basic-html5-destination-binding
+spec:
+  serviceInstanceName: approuter-basic-html5-destination-instance
