@@ -1,0 +1,120 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{PREFIX}}
+  labels:
+    app: {{PREFIX}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{PREFIX}}
+  template:
+    metadata:
+      labels:
+        app: {{PREFIX}}
+    spec:
+      containers:
+        - image: {{IMAGE_NAME}}
+          imagePullPolicy: Always
+          name: {{PREFIX}}
+          volumeMounts:
+            - name: {{PREFIX}}-host-volume
+              mountPath: /etc/secrets/sapcp/html5-apps-repo/{{PREFIX}}-host-instance
+              readOnly: true
+            - name: {{PREFIX}}-xsuaa-volume
+              mountPath: /etc/secrets/sapcp/xsuaa/{{PREFIX}}-xsuaa-instance
+              readOnly: true
+            - name: {{PREFIX}}-destination-volume
+              mountPath: /etc/secrets/sapcp/destination/{{PREFIX}}-destination-instance
+              readOnly: true
+          env:
+            - name: SAP_CLOUD_SERVICE
+              value: "{{SAP_CLOUD_SERVICE}}"
+      volumes:
+        - name: {{PREFIX}}-host-volume
+          secret:
+            secretName: {{PREFIX}}-host-binding
+        - name: {{PREFIX}}-xsuaa-volume
+          secret:
+            secretName: {{PREFIX}}-xsuaa-binding
+        - name: {{PREFIX}}-destination-volume
+          secret:
+            secretName: {{PREFIX}}-destination-binding            
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: {{PREFIX}}-xsuaa-instance
+spec:
+  serviceOfferingName: xsuaa
+  servicePlanName: application  
+  parameters:
+    xsappname: approuter-basic
+    tenant-mode: dedicated
+    oauth2-configuration:
+      grant-types:
+        - authorization_code
+        - client_credentials
+        - password
+        - refresh_token
+        - urn:ietf:params:oauth:grant-type:saml2-bearer
+        - user_token
+        - client_x509
+        - urn:ietf:params:oauth:grant-type:jwt-bearer
+      redirect-uris:
+        - https://*/**            
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: {{PREFIX}}-xsuaa-binding
+spec:
+  serviceInstanceName: {{PREFIX}}-xsuaa-instance
+  externalName: ''
+  secretName: ''
+  parameters: {}
+  parametersFrom: []    
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: {{PREFIX}}-host-instance
+spec:
+  serviceOfferingName: html5-apps-repo
+  servicePlanName: app-host  
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: {{PREFIX}}-host-binding
+spec:
+  serviceInstanceName: {{PREFIX}}-host-instance   
+  externalName: ''
+  secretName: ''
+  parameters: {}
+  parametersFrom: []      
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: {{PREFIX}}-destination-instance
+  labels:
+    app.kubernetes.io/name: {{PREFIX}}-destination-instance
+spec:
+  serviceOfferingName: destination
+  servicePlanName: lite
+  parameters:
+    HTML5Runtime_enabled: true
+    version: "1.0.0"
+
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: {{PREFIX}}-destination-binding
+  labels:
+    app.kubernetes.io/name: {{PREFIX}}-destination-binding
+spec:
+  serviceInstanceName: {{PREFIX}}-destination-instance
