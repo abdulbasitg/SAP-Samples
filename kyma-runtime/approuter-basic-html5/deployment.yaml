@@ -2,51 +2,51 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: approuter-basic-html5
+  name: {{PREFIX}}
   labels:
-    app: approuter-basic-html5
+    app: {{PREFIX}}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: approuter-basic-html5
+      app: {{PREFIX}}
   template:
     metadata:
       labels:
-        app: approuter-basic-html5
+        app: {{PREFIX}}
     spec:
       containers:
-        - image: abdulbasitg/approuter-basic-html5:latest
+        - image: {{IMAGE_NAME}}
           imagePullPolicy: Always
-          name: approuter-basic-html5
+          name: {{PREFIX}}
           volumeMounts:
-            - name: approuter-basic-html5-host-volume
-              mountPath: /etc/secrets/sapcp/html5-apps-repo/approuter-basic-html5-host-instance
+            - name: {{PREFIX}}-host-volume
+              mountPath: /etc/secrets/sapcp/html5-apps-repo/{{PREFIX}}-host-instance
               readOnly: true
-            - name: approuter-basic-html5-xsuaa-volume
-              mountPath: /etc/secrets/sapcp/xsuaa/approuter-basic-html5-xsuaa-instance
+            - name: {{PREFIX}}-xsuaa-volume
+              mountPath: /etc/secrets/sapcp/xsuaa/{{PREFIX}}-xsuaa-instance
               readOnly: true
-            - name: approuter-basic-html5-destination-volume
-              mountPath: /etc/secrets/sapcp/destination/approuter-basic-html5-destination-instance
+            - name: {{PREFIX}}-destination-volume
+              mountPath: /etc/secrets/sapcp/destination/{{PREFIX}}-destination-instance
               readOnly: true
           env:
             - name: SAP_CLOUD_SERVICE
-              value: "ag.samples"
+              value: "{{SAP_CLOUD_SERVICE}}"
       volumes:
-        - name: approuter-basic-html5-host-volume
+        - name: {{PREFIX}}-host-volume
           secret:
-            secretName: approuter-basic-html5-host-binding
-        - name: approuter-basic-html5-xsuaa-volume
+            secretName: {{PREFIX}}-host-binding
+        - name: {{PREFIX}}-xsuaa-volume
           secret:
-            secretName: approuter-basic-html5-xsuaa-binding
-        - name: approuter-basic-html5-destination-volume
+            secretName: {{PREFIX}}-xsuaa-binding
+        - name: {{PREFIX}}-destination-volume
           secret:
-            secretName: approuter-basic-html5-destination-binding            
+            secretName: {{PREFIX}}-destination-binding            
 ---
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
-  name: approuter-basic-html5-xsuaa-instance
+  name: {{PREFIX}}-xsuaa-instance
 spec:
   serviceOfferingName: xsuaa
   servicePlanName: application  
@@ -69,9 +69,9 @@ spec:
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
 metadata:
-  name: approuter-basic-html5-xsuaa-binding
+  name: {{PREFIX}}-xsuaa-binding
 spec:
-  serviceInstanceName: approuter-basic-html5-xsuaa-instance
+  serviceInstanceName: {{PREFIX}}-xsuaa-instance
   externalName: ''
   secretName: ''
   parameters: {}
@@ -80,7 +80,7 @@ spec:
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
-  name: approuter-basic-html5-host-instance
+  name: {{PREFIX}}-host-instance
 spec:
   serviceOfferingName: html5-apps-repo
   servicePlanName: app-host  
@@ -88,9 +88,9 @@ spec:
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
 metadata:
-  name: approuter-basic-html5-host-binding
+  name: {{PREFIX}}-host-binding
 spec:
-  serviceInstanceName: approuter-basic-html5-host-instance   
+  serviceInstanceName: {{PREFIX}}-host-instance   
   externalName: ''
   secretName: ''
   parameters: {}
@@ -99,9 +99,9 @@ spec:
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
-  name: approuter-basic-html5-destination-instance
+  name: {{PREFIX}}-destination-instance
   labels:
-    app.kubernetes.io/name: approuter-basic-html5-destination-instance
+    app.kubernetes.io/name: {{PREFIX}}-destination-instance
 spec:
   serviceOfferingName: destination
   servicePlanName: lite
@@ -113,8 +113,8 @@ spec:
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
 metadata:
-  name: approuter-basic-html5-destination-binding
+  name: {{PREFIX}}-destination-binding
   labels:
-    app.kubernetes.io/name: approuter-basic-html5-destination-binding
+    app.kubernetes.io/name: {{PREFIX}}-destination-binding
 spec:
-  serviceInstanceName: approuter-basic-html5-destination-instance
+  serviceInstanceName: {{PREFIX}}-destination-instance
