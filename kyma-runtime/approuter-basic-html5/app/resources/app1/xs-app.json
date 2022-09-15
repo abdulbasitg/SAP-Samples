@@ -2,6 +2,13 @@
   "welcomeFile": "/index.html",
   "routes": [
     {
+      "source": "^/sap/(.*)$",
+      "target": "/sap/$1",
+      "destination": "S4",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },
+    {
       "source": "^(.*)",
       "target": "$1",
       "authenticationType": "xsuaa",

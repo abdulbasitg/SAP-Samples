@@ -1,48 +1,4 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{PREFIX}}
-  labels:
-    app: {{PREFIX}}
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: {{PREFIX}}
-  template:
-    metadata:
-      labels:
-        app: {{PREFIX}}
-    spec:
-      containers:
-        - image: {{IMAGE_NAME}}
-          imagePullPolicy: Always
-          name: {{PREFIX}}
-          volumeMounts:
-            - name: {{PREFIX}}-host-volume
-              mountPath: /etc/secrets/sapcp/html5-apps-repo/{{PREFIX}}-host-instance
-              readOnly: true
-            - name: {{PREFIX}}-xsuaa-volume
-              mountPath: /etc/secrets/sapcp/xsuaa/{{PREFIX}}-xsuaa-instance
-              readOnly: true
-            - name: {{PREFIX}}-destination-volume
-              mountPath: /etc/secrets/sapcp/destination/{{PREFIX}}-destination-instance
-              readOnly: true
-          env:
-            - name: SAP_CLOUD_SERVICE
-              value: "{{SAP_CLOUD_SERVICE}}"
-      volumes:
-        - name: {{PREFIX}}-host-volume
-          secret:
-            secretName: {{PREFIX}}-host-binding
-        - name: {{PREFIX}}-xsuaa-volume
-          secret:
-            secretName: {{PREFIX}}-xsuaa-binding
-        - name: {{PREFIX}}-destination-volume
-          secret:
-            secretName: {{PREFIX}}-destination-binding            
----
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
@@ -83,7 +39,7 @@ metadata:
   name: {{PREFIX}}-host-instance
 spec:
   serviceOfferingName: html5-apps-repo
-  servicePlanName: app-host  
+  servicePlanName: app-host 
 ---
 apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
@@ -107,7 +63,7 @@ spec:
   servicePlanName: lite
   parameters:
     HTML5Runtime_enabled: true
-    version: "1.0.0"
+    version: "1.0.1"
 
 ---
 apiVersion: services.cloud.sap.com/v1alpha1
@@ -118,3 +74,49 @@ metadata:
     app.kubernetes.io/name: {{PREFIX}}-destination-binding
 spec:
   serviceInstanceName: {{PREFIX}}-destination-instance
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{PREFIX}}
+  labels:
+    app: {{PREFIX}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{PREFIX}}
+  template:
+    metadata:
+      labels:
+        app: {{PREFIX}}
+    spec:
+      containers:
+        - image: {{IMAGE_NAME}}
+          imagePullPolicy: Always
+          name: {{PREFIX}}
+          volumeMounts:
+            - name: {{PREFIX}}-host-volume
+              mountPath: /etc/secrets/sapcp/html5-apps-repo/{{PREFIX}}-host-instance
+              readOnly: true
+            - name: {{PREFIX}}-xsuaa-volume
+              mountPath: /etc/secrets/sapcp/xsuaa/{{PREFIX}}-xsuaa-instance
+              readOnly: true
+            - name: {{PREFIX}}-destination-volume
+              mountPath: /etc/secrets/sapcp/destination/{{PREFIX}}-destination-instance
+              readOnly: true
+          env:
+            - name: SAP_CLOUD_SERVICE
+              value: "{{SAP_CLOUD_SERVICE}}"
+            - name: APP_LOG_LEVEL
+              value: debug              
+      volumes:
+        - name: {{PREFIX}}-host-volume
+          secret:
+            secretName: {{PREFIX}}-host-binding
+        - name: {{PREFIX}}-xsuaa-volume
+          secret:
+            secretName: {{PREFIX}}-xsuaa-binding
+        - name: {{PREFIX}}-destination-volume
+          secret:
+            secretName: {{PREFIX}}-destination-binding            

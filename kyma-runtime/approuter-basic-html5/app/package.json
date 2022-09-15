@@ -1,8 +1,8 @@
 {
     "name": "approuter-basic-html5",
-    "version": "1.0.1",
+    "version": "1.0.0",
     "dependencies": {
-      "@sap/html5-app-deployer": "2.3.1"
+      "@sap/html5-app-deployer": "4.2.0"
     },
     "scripts": {
       "start": "node node_modules/@sap/html5-app-deployer/index.js"
