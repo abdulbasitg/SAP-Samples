@@ -1,9 +1,9 @@
 #!/bin/sh
 
 #set default values
-NAMESPACE=development
+NAMESPACE=default
 IMAGENAME=abdulbasitg/approuter-basic-html5:latest
-SAP_CLOUD_SERVICE=ag.samples
+SAP_CLOUD_SERVICE=sap.samples
 PREFIX=approuter-basic-html5
 
 dockerbuild() {
