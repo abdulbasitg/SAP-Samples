@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:18-alpine
 
 RUN mkdir -p /app && \
     chown node.node /app
@@ -8,6 +8,6 @@ WORKDIR /app
 
 # Bundle app source
 COPY . .
-RUN npm install  --production
+RUN npm install  --omit=dev
 
 CMD [ "npm", "start" ]
