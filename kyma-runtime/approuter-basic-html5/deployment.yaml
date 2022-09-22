@@ -3,6 +3,7 @@ apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
   name: {{PREFIX}}-xsuaa-instance
+  namespace: {{NAMESPACE}}  
 spec:
   serviceOfferingName: xsuaa
   servicePlanName: application  
@@ -26,6 +27,7 @@ apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
 metadata:
   name: {{PREFIX}}-xsuaa-binding
+  namespace: {{NAMESPACE}}  
 spec:
   serviceInstanceName: {{PREFIX}}-xsuaa-instance
   externalName: ''
@@ -37,6 +39,7 @@ apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
   name: {{PREFIX}}-host-instance
+  namespace: {{NAMESPACE}}  
 spec:
   serviceOfferingName: html5-apps-repo
   servicePlanName: app-host 
@@ -45,6 +48,7 @@ apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
 metadata:
   name: {{PREFIX}}-host-binding
+  namespace: {{NAMESPACE}}  
 spec:
   serviceInstanceName: {{PREFIX}}-host-instance   
   externalName: ''
@@ -56,6 +60,7 @@ apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceInstance
 metadata:
   name: {{PREFIX}}-destination-instance
+  namespace: {{NAMESPACE}}  
   labels:
     app.kubernetes.io/name: {{PREFIX}}-destination-instance
 spec:
@@ -70,6 +75,7 @@ apiVersion: services.cloud.sap.com/v1alpha1
 kind: ServiceBinding
 metadata:
   name: {{PREFIX}}-destination-binding
+  namespace: {{NAMESPACE}}  
   labels:
     app.kubernetes.io/name: {{PREFIX}}-destination-binding
 spec:
@@ -79,8 +85,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{PREFIX}}
-  labels:
-    app: {{PREFIX}}
+  namespace: {{NAMESPACE}}  
 spec:
   replicas: 1
   selector:
