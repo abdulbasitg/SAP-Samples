@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #set default values
-NAMESPACE=default
+NAMESPACE=frontend
 IMAGENAME=abdulbasitg/approuter-basic-html5:latest
 SAP_CLOUD_SERVICE=sap.samples
 PREFIX=approuter-basic-html5
@@ -16,7 +16,7 @@ dockerpush() {
 
 deploy() {
     IMAGENAME_ESCAPED=`echo $IMAGENAME|sed 's/\//\\\\\//g'`
-    sed "s/{{IMAGE_NAME}}/${IMAGENAME_ESCAPED}/g;s/{{SAP_CLOUD_SERVICE}}/${SAP_CLOUD_SERVICE}/g;s/{{PREFIX}}/${PREFIX}/g" deployment.yaml | kubectl -n ${NAMESPACE} apply -f -
+    sed "s/{{IMAGE_NAME}}/${IMAGENAME_ESCAPED}/g;s/{{SAP_CLOUD_SERVICE}}/${SAP_CLOUD_SERVICE}/g;s/{{PREFIX}}/${PREFIX}/g;s/{{NAMESPACE}}/${NAMESPACE}/g" deployment.yaml | kubectl -n ${NAMESPACE} apply -f -
 }
 
 delete() {
@@ -27,6 +27,15 @@ delete() {
     kubectl -n ${NAMESPACE} delete ServiceInstance ${PREFIX}-destination-instance
     kubectl -n ${NAMESPACE} delete ServiceInstance ${PREFIX}-host-instance
     kubectl -n ${NAMESPACE} delete ServiceInstance ${PREFIX}-xsuaa-instance    
+}
+
+shell() {
+    if [ -z "$1" ]
+    then
+        echo "usage: run shell <pod name>"
+    else    
+        kubectl exec -n ${NAMESPACE} -it $1 -- /bin/sh
+    fi
 }
 
 reset() {
@@ -41,6 +50,9 @@ else
         deploy)
             deploy
             ;;
+        shell)
+            shell $2
+            ;;            
         delete)
             delete
             ;;

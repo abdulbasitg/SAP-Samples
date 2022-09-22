@@ -9,5 +9,7 @@ WORKDIR /app
 # Bundle app source
 COPY . .
 RUN npm install  --omit=dev
+RUN ./build.sh
+RUN rm -rf apps
 
 CMD [ "npm", "start" ]
