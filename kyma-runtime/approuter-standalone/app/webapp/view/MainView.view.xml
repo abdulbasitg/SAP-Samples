@@ -1,0 +1,15 @@
+<mvc:View controllerName="com.ag.approuterstandalone.controller.MainView"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns:l="sap.ui.layout"
+    xmlns="sap.m">
+    <Page id="page" title="{i18n>title}">
+        <content>
+	        <l:VerticalLayout id="verticallayout" class="sapUiContentPadding" width="100%">        
+                <Text id="text" text="You are in a public area." />
+                <Link id="link"
+                    text="Click here to navigate back to the public area"
+                    href="/index.html" />        
+            </l:VerticalLayout>
+        </content>
+    </Page>
+</mvc:View>

@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 rm -rf resources
 rm -rf build
 mkdir resources

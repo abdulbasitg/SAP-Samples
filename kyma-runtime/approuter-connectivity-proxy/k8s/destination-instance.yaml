@@ -1,0 +1,20 @@
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceInstance
+metadata:
+  name: launchpad-dest
+  namespace: development
+  labels:
+    sample: launchpad
+spec:
+  serviceOfferingName: destination
+  servicePlanName: lite
+---
+apiVersion: services.cloud.sap.com/v1
+kind: ServiceBinding
+metadata:
+  labels:
+    sample: launchpad
+  name: launchpad-dest
+  namespace: development  
+spec:
+  serviceInstanceName: launchpad-dest
