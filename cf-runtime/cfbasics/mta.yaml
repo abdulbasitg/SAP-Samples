@@ -1,0 +1,59 @@
+_schema-version: '3.3'
+ID: cfbasics
+version: 0.0.1
+
+modules:
+
+  - name: cfbasics-static
+    type: staticfile
+    path: cfbasics-static
+    parameters:
+      app-name: cfbasics-static
+      disk-quota: 128MB
+      memory: 128MB
+      routes:
+        - route: ${app-name}.${default-domain}
+
+  - name: cfbasics-with-destination
+    type: approuter.nodejs
+    path: cfbasics-with-destination  
+    parameters:
+      app-name: cfbasics-with-destination
+      disk-quota: 256MB
+      memory: 128MB
+      routes: 
+        - route: ${app-name}.${default-domain}
+    requires:
+      - name: cfbasics-xsuaa
+      - name: cfbasics-destination
+
+resources:
+
+  - name: cfbasics-xsuaa
+    type: org.cloudfoundry.managed-service
+    properties:
+      XSAPPNAME: cfbasics-xsuaa
+    parameters:
+      service: xsuaa
+      service-name: cfbasics-xsuaa
+      service-plan: application
+      path: ./config/xs-security.json      
+      config:
+        xsappname: cfbasics-xsuaa
+  - name: cfbasics-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service-plan: lite
+      service-name: cfbasics-destination
+      service: destination
+      config:
+        init_data:
+          instance:
+            existing_destinations_policy: update
+            destinations:
+              - Name: backendDestination
+                Description: cfbasics destination
+                URL: https://services.odata.org/V4/Northwind/Northwind.svc/
+                Type: HTTP
+                ProxyType: Internet
+                Authentication: NoAuthentication
