@@ -1,0 +1,274 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{PREFIX}}
+  namespace: {{NAMESPACE}}
+  labels:
+    app: {{PREFIX}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{PREFIX}}
+  template:
+    metadata:
+      labels:
+        app: {{PREFIX}}
+    spec:
+      containers:
+        - image: {{IMAGE_NAME}}
+          imagePullPolicy: Always
+          name: {{PREFIX}}
+          volumeMounts:
+            - name: {{PREFIX}}-xs-app
+              mountPath: /app/xs-app.json
+              subPath: xs-app.json
+              readOnly: true          
+            - name: {{PREFIX}}-host-volume
+              mountPath: /etc/secrets/sapcp/html5-apps-repo/{{PREFIX}}-host-instance
+              readOnly: true
+            - name: {{PREFIX}}-xsuaa-volume
+              mountPath: /etc/secrets/sapcp/xsuaa/{{PREFIX}}-xsuaa-instance
+              readOnly: true
+            - name: {{PREFIX}}-destination-volume
+              mountPath: /etc/secrets/sapcp/destination/{{PREFIX}}-destination-instance
+              readOnly: true
+          env:
+            - name: SAP_CLOUD_SERVICE
+              value: "{{SAP_CLOUD_SERVICE}}"
+            - name: destinations
+              valueFrom:
+                configMapKeyRef:
+                  name: destinations-{{PREFIX}}-{{NAMESPACE}}
+                  key: destinations             
+      volumes:
+        - name: {{PREFIX}}-xs-app
+          configMap:
+            name: xs-app-{{PREFIX}}-{{NAMESPACE}}      
+        - name: {{PREFIX}}-host-volume
+          secret:
+            secretName: {{PREFIX}}-host-binding
+        - name: {{PREFIX}}-xsuaa-volume
+          secret:
+            secretName: {{PREFIX}}-xsuaa-binding
+        - name: {{PREFIX}}-destination-volume
+          secret:
+            secretName: {{PREFIX}}-destination-binding            
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: {{PREFIX}}-xsuaa-instance
+  namespace: {{NAMESPACE}}
+spec:
+  serviceOfferingName: xsuaa
+  servicePlanName: application  
+  parameters:
+    xsappname: {{NAMESPACE}}-{{PREFIX}}
+    tenant-mode: dedicated
+    oauth2-configuration:
+      grant-types:
+        - authorization_code
+        - client_credentials
+        - password
+        - refresh_token
+        - urn:ietf:params:oauth:grant-type:saml2-bearer
+        - user_token
+        - client_x509
+        - urn:ietf:params:oauth:grant-type:jwt-bearer
+      redirect-uris:
+        - https://*/**            
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: {{PREFIX}}-xsuaa-binding
+  namespace: {{NAMESPACE}}
+spec:
+  serviceInstanceName: {{PREFIX}}-xsuaa-instance
+  externalName: ''
+  secretName: ''
+  parameters: {}
+  parametersFrom: []    
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: {{PREFIX}}-host-instance
+  namespace: {{NAMESPACE}}
+spec:
+  serviceOfferingName: html5-apps-repo
+  servicePlanName: app-runtime
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: {{PREFIX}}-host-binding
+  namespace: {{NAMESPACE}}
+spec:
+  serviceInstanceName: {{PREFIX}}-host-instance   
+  externalName: ''
+  secretName: ''
+  parameters: {}
+  parametersFrom: []      
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceInstance
+metadata:
+  name: {{PREFIX}}-destination-instance
+  namespace: {{NAMESPACE}}
+  labels:
+    app.kubernetes.io/name: {{PREFIX}}-destination-instance
+spec:
+  serviceOfferingName: destination
+  servicePlanName: lite
+  parameters:
+    HTML5Runtime_enabled: true
+    version: "1.0.0"
+
+---
+apiVersion: services.cloud.sap.com/v1alpha1
+kind: ServiceBinding
+metadata:
+  name: {{PREFIX}}-destination-binding
+  namespace: {{NAMESPACE}}
+  labels:
+    app.kubernetes.io/name: {{PREFIX}}-destination-binding
+spec:
+  serviceInstanceName: {{PREFIX}}-destination-instance
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{PREFIX}}-{{NAMESPACE}}
+  name: {{PREFIX}}-{{NAMESPACE}}
+  namespace: {{NAMESPACE}}
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: {{PREFIX}}
+status:
+  loadBalancer: {}  
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  labels:
+    app: ''
+  name: {{PREFIX}}-{{NAMESPACE}}
+  namespace: {{NAMESPACE}}
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: {{PREFIX}}-{{NAMESPACE}}.{{KYMA_SYSTEM}}
+    name: {{PREFIX}}-{{NAMESPACE}}
+    port: 5000
+  rules:
+    - path: /.*
+      methods: ["GET", "POST", "PUT", "DELETE"]
+      accessStrategies:
+        - handler: noop
+      mutators:
+        - handler: header
+          config:
+            headers:
+              x-forwarded-host: "{{PREFIX}}-{{NAMESPACE}}.{{KYMA_SYSTEM}}"  
+---
+apiVersion: serverless.kyma-project.io/v1alpha1
+kind: Function
+metadata:
+  name: fn-{{PREFIX}}-{{NAMESPACE}}
+  namespace: {{NAMESPACE}}
+spec:
+  runtime: nodejs16
+  source: |
+    module.exports = {
+      main: function(event, context) {
+        return 'Hello World!'
+      }
+    }              
+---
+apiVersion: gateway.kyma-project.io/v1alpha1
+kind: APIRule
+metadata:
+  labels:
+    app: ''
+  name: fn-{{PREFIX}}-{{NAMESPACE}}
+  namespace: {{NAMESPACE}}
+spec:
+  gateway: kyma-gateway.kyma-system.svc.cluster.local
+  service:
+    host: fn-{{PREFIX}}-{{NAMESPACE}}.{{KYMA_SYSTEM}}
+    name: fn-{{PREFIX}}-{{NAMESPACE}}
+    port: 80
+  rules:
+    - path: /.*
+      methods: ["GET", "POST", "PUT", "DELETE"]
+      accessStrategies:
+        - handler: noop
+      mutators:
+        - handler: header
+          config:
+            headers:
+              x-forwarded-host: "fn-{{PREFIX}}-{{NAMESPACE}}.{{KYMA_SYSTEM}}"      
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: destinations-{{PREFIX}}-{{NAMESPACE}}
+  namespace: {{NAMESPACE}}  
+data:
+  destinations: >-
+    [
+        {
+          "name": "fn-{{PREFIX}}-{{NAMESPACE}}",
+          "url": "https://fn-{{PREFIX}}-{{NAMESPACE}}.{{KYMA_SYSTEM}}",
+          "forwardAuthToken": true
+        }
+    ]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xs-app-{{PREFIX}}-{{NAMESPACE}}              
+data:
+  xs-app.json: |-
+    {
+        "welcomeFile": "index.html",
+        "authenticationMethod": "route",
+        "logout": {
+          "logoutEndpoint": "/logout",
+          "logoutPage": "/logout.html"
+        },
+        "routes": [
+          {
+            "source": "^/webapp/(.*)$",
+            "target": "$1",
+            "localDir": "webapp",
+            "authenticationType": "xsuaa"
+          },
+          {
+              "source": "^/helloworld/(.*)$",
+              "destination": "fn-{{PREFIX}}-{{NAMESPACE}}",
+              "target": "$1",
+              "authenticationType": "xsuaa"
+          },     
+          {
+            "source": "^/s4/(.*)$",
+            "target": "/$1",
+            "destination": "s4proxy",
+            "authenticationType": "xsuaa",
+            "csrfProtection": false
+          },
+          {
+            "source": "^(/.*)",
+            "target": "$1",
+            "localDir": "public",
+            "authenticationType": "none"
+          }
+        ]
+      }
