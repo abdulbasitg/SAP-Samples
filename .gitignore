@@ -4,3 +4,4 @@ dist/
 app/*/package-lock.json
 
 **/default-env.json
+default-env.json
