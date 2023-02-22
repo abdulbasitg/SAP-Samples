@@ -3,4 +3,4 @@ node_modules/
 dist/
 app/*/package-lock.json
 
-/**/*.json
+**/default-env.json
